@@ -19,6 +19,7 @@ group :development, :test do
   gem 'capybara', '~> 3.35', '>= 3.35.3'
   gem 'selenium-webdriver', '~> 3.142', '>= 3.142.7'
   gem 'launchy', '~> 2.5'
+  gem 'pry-rails'
 end
 
 group :development do

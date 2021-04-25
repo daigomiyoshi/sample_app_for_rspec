@@ -26,7 +26,7 @@ RSpec.describe "Users", type: :system do
             fill_in 'user_email', with: user_without_email.email
             fill_in 'user_password', with: user_without_email.password
             fill_in 'user_password_confirmation', with: user_without_email.password_confirmation
-            click_button 'SignUp'  
+            click_button 'SignUp'
           }.not_to change(User, :count)
           expect(current_path).to eq users_path
           expect(page).to have_content 'Email can\'t be blank'
@@ -40,7 +40,7 @@ RSpec.describe "Users", type: :system do
             fill_in 'user_email', with: user_with_duplicated_email.email
             fill_in 'user_password', with: user_with_duplicated_email.password
             fill_in 'user_password_confirmation', with: user_with_duplicated_email.password_confirmation
-            click_button 'SignUp'  
+            click_button 'SignUp'
           }.not_to change(User, :count)
           expect(current_path).to eq users_path
           expect(page).to have_content 'Email has already been taken'
@@ -60,41 +60,77 @@ RSpec.describe "Users", type: :system do
   end
 
   describe 'ログイン後' do
-    # let(:user) { create(:user) }
-    # before do
-    #   visit login_path
-    #   fill_in 'email', with: user.email
-    #   fill_in 'password', with: user.password
-    #   click_button 'Login'
-    # end
+    let(:password) { 'password' }
+    let(:password_changed) { 'password_changed' }
+    let!(:user) { create(:user, password: password) }
+    let!(:user_with_some_email) { create(:user, email: 'example@example.com') }
+    let!(:another_user) { create(:user, password: password) }
+    before do
+      visit login_path
+      login(user, password)
+    end
     describe 'ユーザー編集' do
-      # before do
-      #   visit edit_user_path(user.id)
-      # end
-      # context 'フォームの入力値が正常' do
-      #   let(:user_changed) { build(:user, password: 'password_changed', password_confirmation: 'password_changed')}
-      #   it 'ユーザーの編集が成功する' do
-      #     fill_in 'user_email', with: user_changed.email
-      #     fill_in 'user_password', with: user_changed.password
-      #     fill_in 'user_password_confirmation', with: user_changed.password_confirmation
-      #     expect(current_path).to to eq user_path(user_changed.id)
-      #     expect(page).to have_content 'User was successfully updated.'
-      #   end
-      # end
+      before do
+        visit edit_user_path(user.id)
+      end
+      context 'フォームの入力値が正常' do
+        it 'ユーザーの編集が成功する' do
+          fill_in 'user_email', with: user.email
+          fill_in 'user_password', with: password_changed
+          fill_in 'user_password_confirmation', with: password_changed
+          click_button 'Update'
+          expect(current_path).to eq user_path(user.id)
+          expect(page).to have_content 'User was successfully updated.'
+        end
+      end
       context 'メールアドレスが未入力' do
-        it 'ユーザーの編集が失敗する'
+        it 'ユーザーの編集が失敗する' do
+          fill_in 'user_email', with: ''
+          fill_in 'user_password', with: password_changed
+          fill_in 'user_password_confirmation', with: password_changed
+          click_button 'Update'
+          expect(current_path).to eq user_path(user.id)
+          expect(page).to have_content 'Email can\'t be blank'
+        end
       end
       context '登録済みのメールアドレスを使用' do
-        it 'ユーザーの編集が失敗する'
+        it 'ユーザーの編集が失敗する' do
+          fill_in 'user_email', with: user_with_some_email.email
+          fill_in 'user_password', with: password_changed
+          fill_in 'user_password_confirmation', with: password_changed
+          click_button 'Update'
+          expect(current_path).to eq user_path(user.id)
+          expect(page).to have_content 'Email has already been taken'
+        end
       end
       context '他ユーザーの編集ページにアクセス' do
-        it '編集ページへのアクセスに失敗する'
+        it '編集ページへのアクセスに失敗する' do
+          visit edit_user_path(another_user.id)
+          expect(current_path).to eq user_path(user.id)
+          expect(page).to have_content 'Forbidden access.'
+        end
       end
     end
 
     describe 'マイページ' do
+      before do
+        visit user_path(user.id)
+      end
       context 'タスクを作成' do
-        it '新規作成したタスクが表示される'
+        let(:task_title) { 'task_title' }
+        let(:task_content) { 'task_content' }
+        let(:task_status) { 'doing' }
+        let(:task_deadline) { 1.week.from_now }
+        it '新規作成したタスクが表示される' do
+          visit new_task_path
+          fill_in 'task_title', with: task_title
+          fill_in 'task_content', with: task_content
+          select task_status, from: 'task_status'
+          fill_in 'task_deadline', with: task_deadline
+          click_button 'Create Task'
+          expect(current_path).to eq task_path(Task.first.id)
+          expect(page).to have_content 'Task was successfully created.'
+        end
       end
     end
   end
