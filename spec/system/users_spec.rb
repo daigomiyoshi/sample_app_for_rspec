@@ -29,7 +29,7 @@ RSpec.describe "Users", type: :system do
             click_button 'SignUp'
           }.not_to change(User, :count)
           expect(current_path).to eq users_path
-          expect(page).to have_content 'Email can\'t be blank'
+          expect(page).to have_content "Email can't be blank"
         end
       end
       context '登録済みのメールアドレスを使用' do
@@ -90,7 +90,7 @@ RSpec.describe "Users", type: :system do
           fill_in 'user_password_confirmation', with: password_changed
           click_button 'Update'
           expect(current_path).to eq user_path(user.id)
-          expect(page).to have_content 'Email can\'t be blank'
+          expect(page).to have_content "Email can't be blank"
         end
       end
       context '登録済みのメールアドレスを使用' do
